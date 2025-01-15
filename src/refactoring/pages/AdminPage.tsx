@@ -1,25 +1,26 @@
 import React, { useState } from "react";
 import { Coupon, Discount, Product } from "../../types.ts";
-import Button from "../components/shared/Button.tsx";
-import Input from "../components/shared/Input.tsx";
-import PageContainer from "../components/shared/PageContainer.tsx";
+import { Button, Input, PageContainer } from "../components/shared";
+import { useCoupons, useProducts } from "../hooks";
+import { initialCoupons, initialProducts } from "../../store/globalStore.ts";
 
 interface Props {
   products: Product[];
-  coupons: Coupon[];
   onProductUpdate: (updatedProduct: Product) => void;
   onProductAdd: (newProduct: Product) => void;
-  onCouponAdd: (newCoupon: Coupon) => void;
 }
 
 export const AdminPage = ({
   products,
-  coupons,
   onProductUpdate,
   onProductAdd,
-  onCouponAdd,
 }: Props) => {
-  const [openProductIds, setOpenProductIds] = useState<Set<string>>(new Set());
+  const { coupons, addCoupon } = useCoupons(initialCoupons);
+  const { openProductIds, toggleProductAccordion } =
+    useProducts(initialProducts);
+
+  const [showNewProductForm, setShowNewProductForm] = useState(false);
+
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [newDiscount, setNewDiscount] = useState<Discount>({
     quantity: 0,
@@ -31,25 +32,12 @@ export const AdminPage = ({
     discountType: "percentage",
     discountValue: 0,
   });
-  const [showNewProductForm, setShowNewProductForm] = useState(false);
   const [newProduct, setNewProduct] = useState<Omit<Product, "id">>({
     name: "",
     price: 0,
     stock: 0,
     discounts: [],
   });
-
-  const toggleProductAccordion = (productId: string) => {
-    setOpenProductIds((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(productId)) {
-        newSet.delete(productId);
-      } else {
-        newSet.add(productId);
-      }
-      return newSet;
-    });
-  };
 
   // handleEditProduct 함수 수정
   const handleEditProduct = (product: Product) => {
@@ -112,16 +100,6 @@ export const AdminPage = ({
       onProductUpdate(newProduct);
       setEditingProduct(newProduct);
     }
-  };
-
-  const handleAddCoupon = () => {
-    onCouponAdd(newCoupon);
-    setNewCoupon({
-      name: "",
-      code: "",
-      discountType: "percentage",
-      discountValue: 0,
-    });
   };
 
   const handleAddNewProduct = () => {
@@ -380,7 +358,7 @@ export const AdminPage = ({
               />
             </div>
             <Button
-              onClick={handleAddCoupon}
+              onClick={() => addCoupon(newCoupon)}
               className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600"
             >
               쿠폰 추가
